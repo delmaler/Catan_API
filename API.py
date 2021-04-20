@@ -288,6 +288,14 @@ def create_land_numbers():
     return land_nums
 
 
+def create_profiles() -> list[Image]:
+    profiles = [Image.open('images/source/shay_profile.JPG'),
+                Image.open('images/source/snow_profile.JPG'),
+                Image.open('images/source/shaked_profile.JPG'),
+                Image.open('images/source/odeya_profile.JPG')]
+    return profiles
+
+
 class API:
     def __init__(self, names: list[str]):
         self.names = names
@@ -302,6 +310,7 @@ class API:
         self.draw = ImageDraw.Draw(self.start)
         self.action_img = Image.open('images/source/action.JPG')
         self.do_i_save_copy = False
+        self.profiles = create_profiles()
         self.settlements = self.create_settlements()
         self.cities = self.create_cities()
         self.settlement_mask = Image.open('images/source/settlement_mask.png').convert('L')
@@ -310,7 +319,7 @@ class API:
         self.dice = []
         for i in range(1, 7):
             self.dice += [Image.open('images/source/die' + str(i) + '.jpg')]
-        self.print_names()
+        self.print_profiles()
         self.resource_locations = []
         self.print_resources_imgs()
         self.resource_img = Image.open('images/source/resource.png')
@@ -335,6 +344,21 @@ class API:
         self.land_nums = create_land_numbers()
         self.number_mask = Image.open('images/source/number_mask.jpg').convert('L')
 
+    def write_headline(self, text):
+        w, h = self.draw.textsize(text, font=self.font)
+        self.draw.multiline_text(((3160 - w) / 2, self.headline_y), text, fill=(255, 255, 255), font=self.font)
+        self.headline_y += h * 1.5
+
+    def write_from_right(self, text, line, above, index):
+        w, h = self.draw.textsize(text, font=self.font)
+        self.start.paste(self.profiles[index], (3247 - self.profiles[index].size[0], line - 50 * above))
+        self.draw.multiline_text((3227 - self.profiles[index].size[0] - w, line - 50 * above), text, fill=(0, 0, 0), font=self.font)
+
+    def write_from_left(self, text, line, above, index):
+        w, h = self.draw.textsize(text, font=self.font)
+        self.start.paste(self.profiles[index], (50, line - 50 * above))
+        self.draw.multiline_text((70 + self.profiles[index].size[0], line - 50 * above), text, fill=(0, 0, 0), font=self.font)
+
     def create_settlements(self):
         settlements = []
         for i in range(self.num_of_players):
@@ -348,19 +372,6 @@ class API:
             name = 'images/source/city' + str(i + 1) + '.png'
             cities += [Image.open(name).convert("RGBA")]
         return cities
-
-    def write_headline(self, text):
-        w, h = self.draw.textsize(text, font=self.font)
-        self.draw.multiline_text(((3160 - w) / 2, self.headline_y), text, fill=(255, 255, 255), font=self.font)
-        self.headline_y += h * 1.5
-
-    def write_from_right(self, text, line, above):
-        w, h = self.draw.textsize(text, font=self.font)
-        self.draw.multiline_text((3247 - w, line - 50 * above), text, fill=(0, 0, 0), font=self.font)
-
-    def write_from_left(self, text, line, above):
-        w, h = self.draw.textsize(text, font=self.font)
-        self.draw.multiline_text((50, line - 50 * above), text, fill=(0, 0, 0), font=self.font)
 
     def new_turn(self):
         self.action = 0
@@ -397,13 +408,13 @@ class API:
     def end_turn(self):
         self.round, self.turn = Auxilary.next_turn(self.num_of_players, self.round, self.turn)
 
-    def print_names(self):
-        self.write_from_left(self.names[0], 1320, 1)
-        self.write_from_left(self.names[1], 1320, -1)
+    def print_profiles(self):
+        self.write_from_left(self.names[0], 1320, 1, 0)
+        self.write_from_left(self.names[1], 1320, -1, 1)
         if self.num_of_players > 2:
-            self.write_from_right(self.names[2], 1320, 1)
+            self.write_from_right(self.names[2], 1320, 1, 2)
         if self.num_of_players > 3:
-            self.write_from_right(self.names[3], 1320, -1)
+            self.write_from_right(self.names[3], 1320, -1, 3)
 
     def print_resources_imgs(self):
         resources = {Resource.CLAY: Image.open('images/source/mini clay.JPG'),
@@ -545,20 +556,3 @@ class API:
                 x += self.land_w
             y += (self.land_mid_h + self.land_hat_h)
         self.save_file()
-
-
-"""
-                if land.num != 7:
-                    curr_num_img = number_img.copy()
-                    draw = ImageDraw.Draw(curr_num_img)
-                    if land.num == 6 or land.num == 8:
-                        draw.multiline_text(num_loc, str(land.num), fill=(255, 0, 0), font=font)
-                    else:
-                        draw.multiline_text(num_loc, str(land.num), fill=(0, 0, 0), font=font)
-                    curr_num_img.save('images/temp/temp.jpg')
-                    curr_num_img = Image.open('images/temp/temp.jpg')
-                    curr_img.paste(curr_num_img, (x, y), number_mask)
-                x += terrain_size[0]
-            y += ter_top_mid_height
-        curr_img.save('images/temp/background.jpg', quality=95)
-"""
