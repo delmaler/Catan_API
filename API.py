@@ -395,11 +395,14 @@ class API:
         return cities
 
     def new_turn(self):
+        self.new_turn_name(self.names[self.turn])
+
+    def new_turn_name(self, name):
         self.action = 0
         self.headline_y = 480
         self.delete_turn()
         self.write_headline("Round " + str(self.round))
-        self.write_headline(self.names[self.turn])
+        self.write_headline(name)
         self.save_file()
 
     def show_dice(self, die1, die2):
@@ -409,9 +412,6 @@ class API:
         self.start.paste(d2, (int(3160 / 2 + 50), 70))
 
     def save_file(self):
-        if not self.tester_on:
-            # return
-            pass
         name = "images/destination/round " + str(self.round) + "  turn " + \
                str(self.turn) + "  action " + str(self.action) + ".jpg"
         if self.do_i_save_copy:
@@ -420,15 +420,14 @@ class API:
         else:
             self.start.save(name)
         self.action += 1
-        self.tester_on = False
 
     def delete_turn(self):
-        w, h = self.action_mask.size
-        self.start.paste(self.action_mask, (int((3160 - w) / 2), 0))
+        w, h = self.headline_mask.size
+        self.start.paste(self.headline_mask, (int((3160 - w) / 2), self.headline_y))
 
     def delete_action(self):
         x, y = self.action_location
-        self.start.paste(self.headline_mask, (x - 10, y - 10))
+        self.start.paste(self.action_mask, (x - 10, y - 10))
 
     def end_turn(self):
         self.round, self.turn = Auxilary.next_turn(self.num_of_players, self.round, self.turn)

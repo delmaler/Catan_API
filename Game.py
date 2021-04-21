@@ -30,19 +30,25 @@ class Game:
 
     def start_game(self):
         for i in range(len(self.players)):
+            self.api.new_turn()
             self.log.turn_log['resources'] = resource_log(self.players[i].hand)
             if self.players[i].is_computer:
                 self.players[i].computer_1st_settlement()
             else:
                 pass
             self.next_turn()
+            self.api.end_turn()
         for i in range(len(self.players) - 1, -1, -1):
+            self.api.new_turn_name(self.players[i].name)
             self.log.turn_log['resources'] = resource_log(self.players[i].hand)
             if self.players[i].is_computer:
                 self.players[i].computer_2nd_settlement()
             else:
                 pass
             self.next_turn()
+            self.api.end_turn()
+        self.api.round = 1
+        self.api.turn = self.players_num - 1
 
     def play_game(self):
         self.start_game()
@@ -94,6 +100,7 @@ class Game:
         for p in self.players:
             self.api.print_resources(p.index, p.hand.resources)
         self.api.save_file()
+        self.api.delete_action()
         self.log.dice(self.board.dice.sum)
         if self.board.dice.sum == 7:
             self.throw_cards()
