@@ -106,11 +106,12 @@ class UseKnight(UseDevCard):
 
     # todo test it
     def undo_use_knight(self, resource: Resource, terrain: Terrain):
+        dst = self.hand.board.hands[self.dst]
         assert terrain is not None
         terrain.put_bandit()
         if resource is not None:
             self.hand.resources[resource] -= 1
-            self.dst.resources[resource] += 1
+            dst.resources[resource] += 1
 
     def steal(self):
         dst = self.hand.board.hands[self.dst]
@@ -185,7 +186,7 @@ class UseBuildRoads(UseDevCard):
         self.road1 = road1
         self.road2 = road2
         self.name = 'use build roads'
-        self.heuristic += self.compute_heuristic()
+        #self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
@@ -215,7 +216,7 @@ class UseBuildRoads(UseDevCard):
         for card in hand.cards["road building"]:
             if card.is_valid():
                 if road1.is_legal(player) and road2.is_legal(player):
-                    self.heuristic += self.compute_heuristic()
+                    #self.heuristic += self.compute_heuristic()
                     road1.build(hand.index)
                     road2.build(hand.index)
                     hand.cards["road building"].remove(card)
@@ -426,6 +427,7 @@ class BuildRoad(Action):
 
     def action_aftermath(self):
         api.print_action(self.name)
+        api.write_a_note(str(self.check_longest_road()))
         i0, j0 = self.road.neighbors[0].location
         i1, j1 = self.road.neighbors[1].location
         api.print_road(self.hand.index, i0, j0, i1, j1)
@@ -481,6 +483,40 @@ class BuildRoad(Action):
         heuristic_increment += self.hand.parameters.longest_road_value - old_road_length
         build_road.undo()
         return heuristic_increment
+
+    def travel_left(self, cr: Crossroad, roads, right):
+        end = True
+        longest_road = roads
+        for n in cr.neighbors:
+            if n.road.owner == self.hand.index and n.road.traveled is not True:
+                end = False
+                n.road.traveled = True
+                current_road = self.travel_left(n.crossroad, roads + 1, right)
+                n.road.traveled = False
+                if longest_road < current_road:
+                    longest_road = current_road
+        if end:
+            return roads + self.travel_right(right, 0) + 1
+        else:
+            return longest_road
+
+    def travel_right(self, cr: Crossroad, roads):
+        longest_right_road = roads
+        for n in cr.neighbors:
+            if n.road.owner == self.hand.index and n.road.traveled is not True:
+                n.road.traveled = True
+                right_road = self.travel_right(n.crossroad, roads + 1)
+                n.road.traveled = False
+                if longest_right_road < right_road:
+                    longest_right_road = right_road
+        return longest_right_road
+
+    def check_longest_road(self):
+        left, right = self.road.neighbors  # type: Crossroad
+        self.road.traveled = True
+        longest_road =  self.travel_left(left, 0, right)
+        self.road.traveled = False
+        return longest_road
 
 
 class BuildFreeRoad(BuildRoad):

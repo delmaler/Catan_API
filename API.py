@@ -370,6 +370,12 @@ class API:
         self.land_nums = create_land_numbers()
         self.number_mask = Image.open('images/source/number_mask.jpg').convert('L')
 
+    def write_a_note(self, text):
+        w, h = self.draw.textsize(text, font=self.font)
+        self.start.paste(self.headline_mask, (int((3160 - w) / 2), 1555))
+        self.draw.multiline_text(((3160 - w) / 2, 1565), text, fill=(255, 255, 255), font=self.font)
+        self.save_file()
+
     def trade(self, buyer, seller, source, destination, give, take):
         self.tester_on = True
         if buyer == self.num_of_players:

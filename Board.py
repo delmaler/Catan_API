@@ -189,6 +189,7 @@ class Road:
         self.neighbors = []
         self.board = board
         self.temp_build_info = {}
+        self.traveled = False
 
     def upgrade_longest_road(self, player):
         i = player
@@ -297,7 +298,7 @@ class Board:
         self.bandit_location = None
 
         # create 2d array of crossroads
-        self.crossroads = []  # type: List[List[Crossroad]]
+        self.crossroads = []  # type: list[list[Crossroad]]
         for i in range(12):
             line = []
             for j in range(cr_line_len[i]):

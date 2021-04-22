@@ -122,8 +122,9 @@ class Player:
                         if p != self.index:
                             legal_moves += [UseKnight(self.hand, None, terrain, p)]
         if len(list(filter((lambda x: x.ok_to_use), self.hand.cards["monopole"]))) > 0:
-            for i in range(1, 6):
-                legal_moves += [UseMonopole(self, None, Resource[i])]
+            for r in Resource:
+                if r != Resource.DESSERT:
+                    legal_moves += [UseMonopole(self, None, r)]
         if len(list(filter((lambda x: x.ok_to_use), self.hand.cards["road builder"]))) > 0:
             for [road1, road2] in self.board.get_two_legal_roads(self.index):
                 legal_moves += [UseBuildRoads(self.hand, None, road1, road2)]
