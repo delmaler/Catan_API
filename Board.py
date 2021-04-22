@@ -34,7 +34,7 @@ class Terrain:
     def produce(self):
         if not self.has_bandit and self.resource is not Resource.DESSERT:
             for cr in self.crossroads:
-                if cr.ownership is not None :
+                if cr.ownership is not None:
                     self.board.hands[cr.ownership].resources[self.resource] += cr.building
 
     def can_put_bandit(self):
@@ -297,7 +297,7 @@ class Board:
         self.bandit_location = None
 
         # create 2d array of crossroads
-        self.crossroads = []    # type: List[List[Crossroad]]
+        self.crossroads = []  # type: List[List[Crossroad]]
         for i in range(12):
             line = []
             for j in range(cr_line_len[i]):
@@ -368,7 +368,7 @@ class Board:
         self.add_neighbors_to_roads()
 
         # create hands
-        self.hands : list[Hand] = []
+        self.hands: list[Hand] = []
         for n in range(players):
             self.hands += [Hand(n, self)]
 

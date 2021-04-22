@@ -296,8 +296,27 @@ def create_profiles() -> list[Image]:
     return profiles
 
 
+def resize_img(path, size):
+    img = Image.open(path)
+    img = img.resize(size)
+    img.save(path)
+
+
+def resize_arrows(size):
+    resize_img('images/source/give.png', size)
+    resize_img('images/source/take.png', size)
+    resize_img('images/source/give_mask.png', size)
+    resize_img('images/source/take_mask.png', size)
+
+
 class API:
     def __init__(self, names: list[str]):
+        self.times = Image.open('images/source/times.png')
+        self.times_mask = Image.open('images/source/times_mask.png').convert('L')
+        self.give = Image.open('images/source/give.png')
+        self.take = Image.open('images/source/take.png')
+        self.give_mask = Image.open('images/source/give_mask.png').convert('L')
+        self.take_mask = Image.open('images/source/take_mask.png').convert('L')
         self.tester_on = False
         self.names = names
         self.round = 0
@@ -323,6 +342,11 @@ class API:
             self.dice += [Image.open('images/source/die' + str(i) + '.jpg')]
         self.print_profiles()
         self.resource_locations = []
+        self.resources = {Resource.CLAY: Image.open('images/source/mini clay.JPG'),
+                          Resource.WOOD: Image.open('images/source/mini wood.JPG'),
+                          Resource.SHEEP: Image.open('images/source/mini sheep.JPG'),
+                          Resource.WHEAT: Image.open('images/source/mini wheat.JPG'),
+                          Resource.IRON: Image.open('images/source/mini iron.JPG')}
         self.print_resources_imgs()
         self.resource_img = Image.open('images/source/resource.png')
         self.resource_mask = Image.open('images/source/resource_mask.png').convert('L')
@@ -356,9 +380,28 @@ class API:
         p_w, p_h = seller_img.size
         action_img, y = self.get_action("trade")
         w, h = action_img.size
-        action_img.paste(seller_img, (40, 120 + int((100 - p_h) / 2)))
-        action_img.paste(buyer_img, (w - 40 - p_w, 220 + int((100 - p_h) / 2)))
+        a_w, a_h = self.give.size
+        action_img.paste(seller_img, (100, 110 + int((140 - p_h) / 2)))
+        give_img = self.give.copy()
+        self.print_trade_info(20, give_img, source, give)
+        action_img.paste(give_img, (140 + p_w, 90 + int((200 - a_h) / 2)), self.give_mask)
+        action_img.paste(buyer_img, (w - 100 - p_w, 190 + int((200 - p_h) / 2)))
+        action_img.paste(self.take, (w - 140 - p_w - a_w, 203 + int((140 - a_h) / 2)), self.take_mask)
         self.start.paste(action_img, self.action_location)
+
+    def print_trade_info(self, left, arrow, resource, number):
+        resource_number = self.get_resource_number(number).resize((100, int(188 * 100 / 223)))
+        number_mask = self.resource_mask.resize((100, int(188 * 100 / 223)))
+        resource_img = self.resources[resource].resize((70, 60))
+        r_w, r_h = resource_img.size
+        t_w, t_h = self.times.size
+        n_w, n_h = resource_number.size
+        arrow.paste(resource_img, (left, 60))
+        location_x, location_y = (left + r_w + 20, int(60 + (60 - t_h) / 2))
+        arrow.paste(self.times, (location_x, location_y), self.times_mask)
+        location_x += t_w + 20
+        location_y = int(60 + (60 - n_h) / 2)
+        arrow.paste(resource_number, (location_x, location_y), number_mask)
 
     def write_headline(self, text):
         w, h = self.draw.textsize(text, font=self.font)
@@ -441,11 +484,7 @@ class API:
             self.write_from_right(self.names[3], 1320, -1, 3)
 
     def print_resources_imgs(self):
-        resources = {Resource.CLAY: Image.open('images/source/mini clay.JPG'),
-                     Resource.WOOD: Image.open('images/source/mini wood.JPG'),
-                     Resource.SHEEP: Image.open('images/source/mini sheep.JPG'),
-                     Resource.WHEAT: Image.open('images/source/mini wheat.JPG'),
-                     Resource.IRON: Image.open('images/source/mini iron.JPG')}
+        resources = self.resources
         w, h = resources[Resource.CLAY].size
         profile_height = self.profiles[0].size[1]
         line = 1221 - profile_height
@@ -556,15 +595,19 @@ class API:
 
     def print_resources(self, index, resources):
         for r in resources:
-            w, h = self.resource_img.size
-            copy = self.resource_img.copy()
-            draw = ImageDraw.Draw(copy)
-            font = ImageFont.truetype('Library/Fonts/Arial Bold.ttf', 60)
-            w_t, h_t = self.draw.textsize(str(resources[r]), font=font)
-            draw.multiline_text(((w - w_t) / 2, (h - h_t) / 2), str(resources[r]), fill=(0, 0, 0), font=font)
+            copy = self.get_resource_number(resources[r])
             if self.do_i_save_copy:
                 self.copy.paste(copy, self.resource_locations[index][r], self.resource_mask)
             self.start.paste(copy, self.resource_locations[index][r], self.resource_mask)
+
+    def get_resource_number(self, number):
+        w, h = self.resource_img.size
+        copy = self.resource_img.copy()
+        draw = ImageDraw.Draw(copy)
+        font = ImageFont.truetype('Library/Fonts/Arial Bold.ttf', 60)
+        w_t, h_t = self.draw.textsize(str(number), font=font)
+        draw.multiline_text(((w - w_t) / 2, (h - h_t) / 2), str(number), fill=(0, 0, 0), font=font)
+        return copy
 
     def show_terrain(self, lands):
         # setting the y location of the start of the terrain

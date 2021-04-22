@@ -67,9 +67,6 @@ class LogToAction:
             if v is n.crossroad:
                 return n.road
 
-    def is_legal(self):
-        return True
-
 
 def take_best_action(actions):
     if actions:

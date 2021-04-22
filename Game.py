@@ -113,9 +113,9 @@ class Game:
 
     # Todo: enable knight before dice
     def load_game(self, rounds):
-        for r, round in enumerate(rounds):
-            for t, turn in enumerate(round['turns']):
-                print("\n\n\n round : " + str(round['round']) + " | turn : " + str(turn['turn']))
+        for r, rnd in enumerate(rounds):
+            for t, turn in enumerate(rnd['turns']):
+                print("\n\n\n round : " + str(rnd['round']) + " | turn : " + str(turn['turn']))
                 if 'dice' in turn:
                     print("dice : " + str(turn['dice']))
                     self.load_dice(turn['dice'])
@@ -124,7 +124,6 @@ class Game:
                     print(action)
                     player = self.players[action['player']]
                     a = LogToAction(self.board, player, action).get_action()
-                    assert a.is_legal()
                     a.do_action()
                 self.board.next_turn(t, r)
 
