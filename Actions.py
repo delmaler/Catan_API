@@ -13,6 +13,7 @@ from Resources import Resource
 from abc import ABC
 import math
 from random import randrange
+from random import uniform
 
 api: API
 
@@ -21,7 +22,8 @@ class Action(ABC):
     def __init__(self, hand: Hand, heuristic_method):
         self.hand = hand
         self.heuristic_method = heuristic_method
-        self.heuristic = hand.heuristic if self.heuristic_method is None else self.heuristic_method(self)
+        #self.heuristic = hand.heuristic if self.heuristic_method is None else self.heuristic_method(self)
+        self.heuristic = uniform(0, 1) if heuristic_method is None else heuristic_method(self)
         self.log = self.hand.board.log  # type: Log
         self.name = 'action'
 
@@ -79,7 +81,7 @@ class UseKnight(UseDevCard):
         self.terrain = terrain
         self.dst = dst
         self.name = 'use knight'
-        self.heuristic += self.compute_heuristic()
+       # self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
@@ -130,11 +132,11 @@ class UseKnight(UseDevCard):
 
 class UseMonopole(UseDevCard):
     def __init__(self, player, heuristic_method, resource):
-        assert self.resource != Resource.DESSERT
+        assert resource != Resource.DESSERT
         super().__init__(player, heuristic_method)
         self.resource = resource
         self.name = 'use monopole'
-        self.heuristic += self.compute_heuristic()
+        #self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
@@ -148,9 +150,10 @@ class UseMonopole(UseDevCard):
         return self.hand.parameters.resource_value[self.resource] * selected_resource_quantity
 
     def use_monopole(self):
-        for card in self.hand.cards["monopole"]:
+        for index, card in enumerate(self.hand.cards["monopole"]):
             if card.is_valid():
-                for hand in self.hand.board.players:
+                self.hand.cards["monopole"].pop(index)
+                for hand in self.hand.board.hands:
                     if hand.index != self.hand.index:
                         self.hand.resources[self.resource] += hand.resources[self.resource]
                         hand.resources[self.resource] = 0
@@ -161,23 +164,23 @@ class UseYearOfPlenty(UseDevCard):
         super().__init__(hand, heuristic_method)
         self.resource1 = resource1
         self.resource2 = resource2
-        self.heuristic += self.compute_heuristic()
+        #self.heuristic += self.compute_heuristic()
         self.name = 'use year of plenty'
 
     def do_action(self):
         super().do_action()
         self.use_year_of_plenty()
-        self.heuristic += self.compute_heuristic()
+        #self.heuristic += self.compute_heuristic()
 
     def compute_heuristic(self):
         return self.hand.parameters.resource_value[self.resource1] + self.hand.parameters.resource_value[self.resource2]
 
     def use_year_of_plenty(self):
-        for card in self.hand.cards["year of plenty"]:
+        for card in self.hand.cards["year of prosper"]:
             if card.is_valid():
                 self.hand.resources[self.resource1] += 1
                 self.hand.resources[self.resource2] += 1
-                self.hand.cards["year of plenty"].remove(card)
+                self.hand.cards["year of prosper"].remove(card)
 
 
 class UseBuildRoads(UseDevCard):
@@ -213,8 +216,9 @@ class UseBuildRoads(UseDevCard):
         road1 = self.road1  # type: Road
         road2 = self.road2  # type: Road
         player = hand.index
-        for card in hand.cards["road building"]:
+        for index, card in enumerate(hand.cards["road builder"]):
             if card.is_valid():
+                self.hand.cards["road builder"].pop(index)
                 if road1.is_legal(player) and road2.is_legal(player):
                     #self.heuristic += self.compute_heuristic()
                     road1.build(hand.index)
@@ -228,7 +232,7 @@ class UseVictoryPoint(UseDevCard):
     def __init__(self, hand, heuristic_method):
         super().__init__(hand, heuristic_method)
         self.name = "use victory_point"
-        self.heuristic += self.compute_heuristic()
+        #self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
@@ -243,12 +247,11 @@ class UseVictoryPoint(UseDevCard):
     def use_victory_point(self):
         hand = self.hand
         for card in hand.cards["victory point"]:
-            if card.is_valid():
-                hand.points += 1
-                hand.heuristic -= 100
-                if hand.points >= 10:
-                    hand.heuristic += math.inf
-                return True
+            hand.points += 1
+            hand.heuristic -= 100
+            if hand.points >= 10:
+                hand.heuristic += math.inf
+            return True
         return False
 
 
@@ -257,7 +260,7 @@ class BuildSettlement(Action):
         self.crossroad = crossroad
         super().__init__(hand, heuristic_method)
         self.name = 'build settlement'
-        self.heuristic += self.compute_heuristic()
+        #self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
@@ -354,7 +357,7 @@ class BuildCity(Action):
     def __init__(self, hand, heuristic_method, crossroad: Crossroad):
         super().__init__(hand, heuristic_method)
         self.crossroad = crossroad
-        self.heuristic += self.compute_heuristic()
+        #self.heuristic += self.compute_heuristic()
         self.name = 'build city'
 
     def do_action(self):
@@ -574,7 +577,7 @@ class BuyDevCard(Action):
     def __init__(self, hand, heuristic_method):
         super().__init__(hand, heuristic_method)
         self.name = 'buy devCard'
-        self.heuristic += self.compute_heuristic()
+        #self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()

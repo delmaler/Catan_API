@@ -124,14 +124,16 @@ class Player:
         if len(list(filter((lambda x: x.ok_to_use), self.hand.cards["monopole"]))) > 0:
             for r in Resource:
                 if r != Resource.DESSERT:
-                    legal_moves += [UseMonopole(self, None, r)]
+                    legal_moves += [UseMonopole(self.hand, None, r)]
         if len(list(filter((lambda x: x.ok_to_use), self.hand.cards["road builder"]))) > 0:
             for [road1, road2] in self.board.get_two_legal_roads(self.index):
                 legal_moves += [UseBuildRoads(self.hand, None, road1, road2)]
         if len(list(filter((lambda x: x.ok_to_use), self.hand.cards["year of prosper"]))) > 0:
-            for i in range(1, 6):
-                for j in range(1, 6):
-                    legal_moves += [UseYearOfPlenty(self.hand, None, Resource[i], Resource[j])]
+            for r1 in Resource:
+                if r1 != Resource.DESSERT:
+                    for r2 in Resource:
+                        if r2 != Resource.DESSERT:
+                            legal_moves += [UseYearOfPlenty(self.hand, None, r1, r2)]
         if self.board.hands[self.index].can_buy_road():
             for road in self.board.get_legal_roads(self.index):
                 legal_moves += [BuildRoad(self.hand, None, road)]
