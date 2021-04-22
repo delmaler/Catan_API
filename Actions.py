@@ -27,7 +27,6 @@ class Action(ABC):
 
     def do_action(self):
         self.hand.heuristic = self.heuristic
-        print("player : " + self.name + " " + self.name)
         self.log_action()
 
     def log_action(self):
@@ -45,6 +44,10 @@ class Action(ABC):
         api.delete_action()
         self.log_action()
 
+    def action_aftermath(self):
+        api.print_action(self.name)
+        self.shared_aftermath()
+
 
 class DoNothing(Action):
     def __init__(self, hand, heuristic_method):
@@ -60,7 +63,17 @@ class DoNothing(Action):
         return self.hand.heuristic
 
 
-class UseKnight(Action):
+class UseDevCard(Action):
+    def __init__(self, hand, heuristic_method):
+        super().__init__(hand, heuristic_method)
+        self.name = 'use development card'
+
+    def do_action(self):
+        super().do_action()
+        self.action_aftermath()
+
+
+class UseKnight(UseDevCard):
     def __init__(self, hand, heuristic_method, terrain, dst):
         super().__init__(hand, heuristic_method)
         self.terrain = terrain
@@ -100,7 +113,7 @@ class UseKnight(Action):
             self.dst.resources[resource] += 1
 
     def steal(self):
-        dst = self.dst
+        dst = self.hand.board.hands[self.dst]
         resources = dst.get_resources_number()
         if resources == 0:
             return None
@@ -114,7 +127,7 @@ class UseKnight(Action):
                 index -= dst.resources[resource]
 
 
-class UseMonopole(Action):
+class UseMonopole(UseDevCard):
     def __init__(self, player, heuristic_method, resource):
         assert self.resource != Resource.DESSERT
         super().__init__(player, heuristic_method)
@@ -142,7 +155,7 @@ class UseMonopole(Action):
                         hand.resources[self.resource] = 0
 
 
-class UseYearOfPlenty(Action):
+class UseYearOfPlenty(UseDevCard):
     def __init__(self, hand, heuristic_method, resource1, resource2):
         super().__init__(hand, heuristic_method)
         self.resource1 = resource1
@@ -166,7 +179,7 @@ class UseYearOfPlenty(Action):
                 self.hand.cards["year of plenty"].remove(card)
 
 
-class UseBuildRoads(Action):
+class UseBuildRoads(UseDevCard):
     def __init__(self, hand, heuristic_method, road1: Road, road2: Road):
         super().__init__(hand, heuristic_method)
         self.road1 = road1
@@ -210,7 +223,7 @@ class UseBuildRoads(Action):
         return False
 
 
-class UseVictoryPoint(Action):
+class UseVictoryPoint(UseDevCard):
     def __init__(self, hand, heuristic_method):
         super().__init__(hand, heuristic_method)
         self.name = "use victory_point"

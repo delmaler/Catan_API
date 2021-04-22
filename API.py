@@ -385,8 +385,10 @@ class API:
         give_img = self.give.copy()
         self.print_trade_info(20, give_img, source, give)
         action_img.paste(give_img, (140 + p_w, 90 + int((200 - a_h) / 2)), self.give_mask)
+        take_img = self.take.copy()
+        self.print_trade_info(254, take_img, destination, take)
         action_img.paste(buyer_img, (w - 100 - p_w, 190 + int((200 - p_h) / 2)))
-        action_img.paste(self.take, (w - 140 - p_w - a_w, 203 + int((140 - a_h) / 2)), self.take_mask)
+        action_img.paste(take_img, (w - 140 - p_w - a_w, 203 + int((140 - a_h) / 2)), self.take_mask)
         self.start.paste(action_img, self.action_location)
 
     def print_trade_info(self, left, arrow, resource, number):
@@ -399,7 +401,7 @@ class API:
         arrow.paste(resource_img, (left, 60))
         location_x, location_y = (left + r_w + 20, int(60 + (60 - t_h) / 2))
         arrow.paste(self.times, (location_x, location_y), self.times_mask)
-        location_x += t_w + 20
+        location_x += t_w + 10
         location_y = int(60 + (60 - n_h) / 2)
         arrow.paste(resource_number, (location_x, location_y), number_mask)
 

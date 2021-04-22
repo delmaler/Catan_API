@@ -455,10 +455,6 @@ class Board:
                 log += [t_log]
         self.log.board(log)
 
-    def get_max_points(self):
-        max_points = max(self.hands)
-        return max_points
-
     def update_longest_road(self, player):
         former = self.longest_road_owner
         if former is not None:

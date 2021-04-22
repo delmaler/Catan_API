@@ -10,6 +10,7 @@ from Actions import BuildFirstSettlement
 from Actions import BuildSecondSettlement
 from Actions import BuildCity
 from Actions import DoNothing
+from Actions import UseDevCard
 from Actions import UseKnight
 from Actions import UseMonopole
 from Actions import UseBuildRoads
@@ -113,12 +114,13 @@ class Player:
         # finding legal moves from devCards
         if len(list(filter((lambda x: x.ok_to_use), self.hand.cards["knight"]))) > 0:
             # need to check if the cards
-            for terrain in self.board.map:
-                if terrain == self.board.bandit_location:
-                    continue
-                for p in range(self.board.players):
-                    if p != self.index:
-                        legal_moves += [UseKnight(self.hand, None, terrain, p)]
+            for line in self.board.map:
+                for terrain in line:
+                    if terrain == self.board.bandit_location:
+                        continue
+                    for p in range(self.board.players):
+                        if p != self.index:
+                            legal_moves += [UseKnight(self.hand, None, terrain, p)]
         if len(list(filter((lambda x: x.ok_to_use), self.hand.cards["monopole"]))) > 0:
             for i in range(1, 6):
                 legal_moves += [UseMonopole(self, None, Resource[i])]
@@ -175,6 +177,8 @@ class Player:
         cities = []
         roads = []
         trades = []
+        buy_development = None
+        use_development = []
         for a in actions:
             if isinstance(a, BuildSettlement):
                 settlements += [a]
@@ -184,6 +188,10 @@ class Player:
                 roads += [a]
             elif isinstance(a, Trade):
                 trades += [a]
+            elif isinstance(a, BuyDevCard):
+                buy_development = a
+            elif isinstance(a, UseDevCard):
+                use_development += [a]
         a = None
         if settlements:
             a = best_action(settlements)
@@ -191,6 +199,10 @@ class Player:
             a = best_action(cities)
         elif roads:
             a = best_action(roads)
+        elif use_development:
+            a = best_action(use_development)
+        elif buy_development:
+            a = buy_development
         elif trades:
             a = best_action(trades)
         if a:
