@@ -24,9 +24,6 @@ class Game:
         self.api = API(self.board.get_names())
         self.api.show_terrain(self.board.map)
         Actions.api = self.api
-        # create the API
-        # ToDo: delete comment
-        # start_api(self.board)
 
     def start_game(self):
         for i in range(len(self.players)):
@@ -55,6 +52,7 @@ class Game:
         while self.play_round():
             if self.round > 200:
                 print("too many rounds")
+                self.log.end_game()
                 max_points = 0
                 for hand in self.board.hands:
                     if hand.points > max_points:
@@ -156,12 +154,8 @@ class Game:
 
     def create_players(self, num) -> list[Player]:
         players = []
-        r = randint(0, num)
         for i in range(num):
-            if i == r:
-                player = Dork(i, self.board)
-            else:
-                player = Player(i, self.board)
+            player = Dork(i, self.board)
             players += [player]
         self.board.api = API(self.board.get_names())
         return players
@@ -197,7 +191,7 @@ def play_game(num):
 
 
 def main():
-    play_game(1)
+    play_game(1000)
     # load_game("saved_games/game182.json")
 
 

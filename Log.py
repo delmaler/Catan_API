@@ -118,6 +118,11 @@ class Log:
     def end_game(self):
         with open(self.game_log_name, 'w') as outfile:
             json.dump(self.game_log, outfile)
+        with open('tracking_development.json') as json_file:
+            tracker = json.load(json_file)
+            tracker['games'] += [self.round]
+        with open('tracking_development.json', 'w') as outfile:
+            json.dump(tracker, outfile)
 
     def board(self, board_log):
         self.game_log['board'] = board_log
