@@ -1,6 +1,7 @@
 import json
 from Resources import Resource
 from Auxilary import r2s
+from random import uniform
 
 game = {'round': []}
 rounds = []
@@ -86,7 +87,6 @@ def build_statistics():
 
 class Log:
     def __init__(self, players):
-        build_statistics()
         self.round = 0
         self.turn = 0
         self.players = players
@@ -95,6 +95,8 @@ class Log:
         self.round_log = {'round': 0, 'turns': []}
         self.game_log = {'number of players': players, 'rounds': []}
         self.game_log_name = self.create_file_name()
+
+        self.statistic = {}
 
     def next_turn(self):
         self.round_log['turns'] += [self.turn_log]
@@ -129,3 +131,43 @@ class Log:
         with open("saved_games/manager.json", 'w') as outfile:
             json.dump(manager, outfile)
         return name
+
+
+class StatisticsLogger:
+    def __init__(self):
+        self.actions = []
+        with open("statistics.json") as json_file:
+            self.statistics = json.load(json_file)
+
+    def save_action(self, keys, index):
+        self.actions += [(index, keys)]
+
+    def analyze_actions(self, winner):
+        for action in self.actions:
+            win = 1 if winner == action[0] else 0
+            pointer = self.statistics['actions']
+            for key in action[1]:
+                if key in pointer:
+                    pointer[key]['events'] += 1
+                    pointer[key]['wins'] += win
+                else:
+                    pointer[key] = {'events': 1, 'wins': win}
+                pointer = pointer[key]
+        with open('statistics.json', 'w') as out_file:
+            json.dump(self.statistics, out_file)
+
+    def get_statistic(self, keys):
+        pointer = self.statistics['actions']
+        no_info = True
+        for key in keys:
+            if key in pointer:
+                pointer = pointer[key]
+                no_info = False
+            else:
+                if no_info:
+                    return uniform(0, 1)
+                else:
+                    break
+        events = pointer['events']
+        wins = pointer['wins']
+        return wins / events

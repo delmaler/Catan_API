@@ -52,11 +52,17 @@ class Game:
 
     def play_game(self):
         self.start_game()
-        while max(list(map(lambda x: x.points, self.board.hands))) < 10:
+        while self.play_round():
             if self.round > 200:
                 print("too many rounds")
+                max_points = 0
+                for hand in self.board.hands:
+                    if hand.points > max_points:
+                        max_points = hand.points
+                for hand in self.board.hands:
+                    if hand.points == max_points:
+                        self.board.statistics_logger.analyze_actions(hand.index)
                 return
-            self.play_round()
             print(self.round)
             for hand in self.board.hands:
                 for typeCard in hand.cards.values():
@@ -65,15 +71,17 @@ class Game:
                             card.ok_to_use = True
         for hand in self.board.hands:
             if hand.points >= 10:
-                # TODO need to call Log.finish_game
                 print("player number " + str(hand.index) + " is the winner")
                 self.log.end_game()
+                self.board.statistics_logger.analyze_actions(hand.index)
+                return
 
     def play_round(self):
         for player in self.players:
             self.play_turn(player)
             if max(list(map(lambda x: x.points, self.board.hands))) >= 10:
-                break
+                return False
+        return True
 
     def play_turn(self, player: Player):
         self.api.end_turn()

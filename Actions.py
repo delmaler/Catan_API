@@ -3,6 +3,7 @@ from Board import Crossroad
 from Board import Terrain
 from Hand import Hand
 from Log import Log
+from Log import StatisticsLogger
 from Resources import SETTLEMENT_PRICE
 from Resources import ROAD_PRICE
 from Resources import CITY_PRICE
@@ -21,18 +22,21 @@ api: API
 class Action(ABC):
     def __init__(self, hand: Hand, heuristic_method):
         self.hand = hand
+        self.points = self.hand.points  # how many points the player has before the action get executed
         self.heuristic_method = heuristic_method
-        #self.heuristic = hand.heuristic if self.heuristic_method is None else self.heuristic_method(self)
+        # self.heuristic = hand.heuristic if self.heuristic_method is None else self.heuristic_method(self)
+        self.name = 'action'
         self.heuristic = uniform(0, 1) if heuristic_method is None else heuristic_method(self)
         self.log = self.hand.board.log  # type: Log
-        self.name = 'action'
+        self.statistics_logger = self.hand.board.statistics_logger  # type: StatisticsLogger
 
     def do_action(self):
         self.hand.heuristic = self.heuristic
-        self.log_action()
 
     def log_action(self):
-        return {'name': self.name, 'player': self.hand.index}
+        # ToDo: build statistic based on the name of the player (on Dork, Guru, or NNPlayer)
+        history_log = {'name': self.name, 'player': self.hand.index}
+        self.log.action(history_log)
 
     def tmp_do(self):
         pass
@@ -41,14 +45,16 @@ class Action(ABC):
         pass
 
     def shared_aftermath(self):
+        api.print_action(self.name)
         api.print_resources(self.hand.index, self.hand.resources)
         api.save_file()
         api.delete_action()
         self.log_action()
+        statistic_keys = self.create_keys()
+        self.statistics_logger.save_action(statistic_keys, self.hand.index)
 
-    def action_aftermath(self):
-        api.print_action(self.name)
-        self.shared_aftermath()
+    def create_keys(self):
+        return [self.name, self.points, self.hand.name]
 
 
 class DoNothing(Action):
@@ -64,6 +70,11 @@ class DoNothing(Action):
     def compute_heuristic(self):
         return self.hand.heuristic
 
+    def create_keys(self):
+        keys = super().create_keys()
+        # ToDo: DoNothing should get next best action heuristic score in __init__ as key
+        return keys
+
 
 class UseDevCard(Action):
     def __init__(self, hand, heuristic_method):
@@ -72,7 +83,7 @@ class UseDevCard(Action):
 
     def do_action(self):
         super().do_action()
-        self.action_aftermath()
+        self.shared_aftermath()
 
 
 class UseKnight(UseDevCard):
@@ -81,11 +92,14 @@ class UseKnight(UseDevCard):
         self.terrain = terrain
         self.dst = dst
         self.name = 'use knight'
-       # self.heuristic += self.compute_heuristic()
+
+    # self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
         self.use_knight()
+        # ToDo : give a more meaningful type
+        self.shared_aftermath()
 
     # Todo: move to heuristic
     def compute_heuristic(self):
@@ -129,6 +143,13 @@ class UseKnight(UseDevCard):
             else:
                 index -= dst.resources[resource]
 
+    def create_keys(self):
+        keys = super(UseKnight, self).create_keys()
+        n_i, p_i = self.hand.board.bandit_location.bandit_value(self.hand.index)
+        n_f, p_f = self.terrain.bandit_value(self.hand.index)
+        keys += [n_i - n_f, p_f - p_i]
+        return keys
+
 
 class UseMonopole(UseDevCard):
     def __init__(self, player, heuristic_method, resource):
@@ -136,11 +157,13 @@ class UseMonopole(UseDevCard):
         super().__init__(player, heuristic_method)
         self.resource = resource
         self.name = 'use monopole'
-        #self.heuristic += self.compute_heuristic()
+        # self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
         self.use_monopole()
+        # ToDo : give a more meaningful type
+        self.shared_aftermath()
 
     # Todo: move to heuristic
     def compute_heuristic(self):
@@ -158,19 +181,30 @@ class UseMonopole(UseDevCard):
                         self.hand.resources[self.resource] += hand.resources[self.resource]
                         hand.resources[self.resource] = 0
 
+    def create_keys(self):
+        keys = super().create_keys()
+        take = 0
+        for hand in self.hand.board.hands:
+            if hand != self.hand:
+                take += hand.resources[self.resource]
+        keys += [take]
+        return keys
+
 
 class UseYearOfPlenty(UseDevCard):
     def __init__(self, hand, heuristic_method, resource1, resource2):
         super().__init__(hand, heuristic_method)
         self.resource1 = resource1
         self.resource2 = resource2
-        #self.heuristic += self.compute_heuristic()
+        # self.heuristic += self.compute_heuristic()
         self.name = 'use year of plenty'
 
     def do_action(self):
         super().do_action()
         self.use_year_of_plenty()
-        #self.heuristic += self.compute_heuristic()
+        # self.heuristic += self.compute_heuristic()
+        # ToDo : give a more meaningful type
+        self.shared_aftermath()
 
     def compute_heuristic(self):
         return self.hand.parameters.resource_value[self.resource1] + self.hand.parameters.resource_value[self.resource2]
@@ -189,11 +223,13 @@ class UseBuildRoads(UseDevCard):
         self.road1 = road1
         self.road2 = road2
         self.name = 'use build roads'
-        #self.heuristic += self.compute_heuristic()
+        # self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
         self.build_2_roads()
+        # ToDo : give a more meaningful type
+        self.shared_aftermath()
 
     # ToDo: fix
     def compute_heuristic(self):
@@ -206,7 +242,7 @@ class UseBuildRoads(UseDevCard):
         if self.hand.board.longest_road_owner != self.hand.index:
             heuristic_increment += (self.hand.board.longest_road_owner == self.hand.index) * 5
         heuristic_increment += self.hand.parameters.longest_road_value - old_road_length
-        hand_heuristic = self.hand.heuristic
+        # hand_heuristic = self.hand.heuristic
         build_road1.undo()
         build_road2.undo()
         return heuristic_increment
@@ -220,7 +256,7 @@ class UseBuildRoads(UseDevCard):
             if card.is_valid():
                 self.hand.cards["road builder"].pop(index)
                 if road1.is_legal(player) and road2.is_legal(player):
-                    #self.heuristic += self.compute_heuristic()
+                    # self.heuristic += self.compute_heuristic()
                     road1.build(hand.index)
                     road2.build(hand.index)
                     hand.cards["road building"].remove(card)
@@ -232,11 +268,13 @@ class UseVictoryPoint(UseDevCard):
     def __init__(self, hand, heuristic_method):
         super().__init__(hand, heuristic_method)
         self.name = "use victory_point"
-        #self.heuristic += self.compute_heuristic()
+        # self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
         self.use_victory_point()
+        # ToDo : give a more meaningful type
+        self.shared_aftermath()
 
     def compute_heuristic(self):
         if len(list(filter(lambda x: x.ok_to_use, self.hand.cards["victory points"]))) + self.hand.points >= 10:
@@ -246,13 +284,10 @@ class UseVictoryPoint(UseDevCard):
 
     def use_victory_point(self):
         hand = self.hand
-        for card in hand.cards["victory point"]:
-            hand.points += 1
-            hand.heuristic -= 100
-            if hand.points >= 10:
-                hand.heuristic += math.inf
-            return True
-        return False
+        hand.points += len(hand.cards['victory points'])
+        hand.heuristic -= 1000
+        if hand.points >= 10:
+            hand.heuristic += math.inf
 
 
 class BuildSettlement(Action):
@@ -260,7 +295,7 @@ class BuildSettlement(Action):
         self.crossroad = crossroad
         super().__init__(hand, heuristic_method)
         self.name = 'build settlement'
-        #self.heuristic += self.compute_heuristic()
+        # self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()
@@ -272,6 +307,7 @@ class BuildSettlement(Action):
         api.print_action(self.name)
         api.print_settlement(self.hand.index, i, j)
         api.point_on_crossroad(i, j)
+        # ToDo : give a more meaningful type
         self.shared_aftermath()
 
     def log_action(self):
@@ -325,6 +361,14 @@ class BuildSettlement(Action):
         if self.crossroad.port is not None:
             hand.ports.add(self.crossroad.port)
 
+    def create_keys(self):
+        keys = super().create_keys()
+        keys += [self.crossroad.val['sum']]
+        for resource in Resource:
+            if resource != Resource.DESSERT:
+                keys += [self.crossroad.val[resource]]
+        return keys
+
 
 class BuildFirstSettlement(BuildSettlement):
     def __init__(self, hand, heuristic_method, crossroad):
@@ -357,7 +401,7 @@ class BuildCity(Action):
     def __init__(self, hand, heuristic_method, crossroad: Crossroad):
         super().__init__(hand, heuristic_method)
         self.crossroad = crossroad
-        #self.heuristic += self.compute_heuristic()
+        # self.heuristic += self.compute_heuristic()
         self.name = 'build city'
 
     def do_action(self):
@@ -415,6 +459,14 @@ class BuildCity(Action):
                                    hand.parameters.resource_value[resource]
         self.crossroad.unbuild(self.hand.index, legals)
         return heuristic_increment
+
+    def create_keys(self):
+        keys = super().create_keys()
+        keys += [self.crossroad.val['sum']]
+        for resource in Resource:
+            if resource != Resource.DESSERT:
+                keys += [self.crossroad.val[resource]]
+        return keys
 
 
 class BuildRoad(Action):
@@ -517,7 +569,7 @@ class BuildRoad(Action):
     def check_longest_road(self):
         left, right = self.road.neighbors  # type: Crossroad
         self.road.traveled = True
-        longest_road =  self.travel_left(left, 0, right)
+        longest_road = self.travel_left(left, 0, right)
         self.road.traveled = False
         return longest_road
 
@@ -543,6 +595,7 @@ class Trade(Action):
         self.take = take
         self.give = take * exchange_rate
         self.name = 'trade'
+        self.exchange_rate = exchange_rate
 
     def do_action(self):
         super().do_action()
@@ -572,12 +625,17 @@ class Trade(Action):
         self.hand.resources[self.src] -= self.give
         self.hand.resources[self.dst] += self.take
 
+    def create_keys(self):
+        keys = super().create_keys()
+        keys += [self.exchange_rate]
+        return keys
+
 
 class BuyDevCard(Action):
     def __init__(self, hand, heuristic_method):
         super().__init__(hand, heuristic_method)
         self.name = 'buy devCard'
-        #self.heuristic += self.compute_heuristic()
+        # self.heuristic += self.compute_heuristic()
 
     def do_action(self):
         super().do_action()

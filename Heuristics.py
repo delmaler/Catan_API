@@ -1,6 +1,7 @@
 from Actions import Action
 from Board import Board
 from Board import Terrain
+from Log import StatisticsLogger
 from Resources import Resource
 from Auxilary import r2s
 import json
@@ -42,8 +43,13 @@ class SimpleHeuristic:
 
 
 class StatisticsHeuristic:
-    with open('statistics.json') as json_file:
-        statistics = json.load(json_file)
+    def __init__(self, statistic_logger: StatisticsLogger):
+        self.st_logger = statistic_logger
+
+    def get_statistic(self, action: Action):
+        keys = action.create_keys()
+        ratio = self.st_logger.get_statistic(keys)
+        return ratio
 
     def settlement_value(self, build_settlement):
         book = self.statistics['settlement']['production']

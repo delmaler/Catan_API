@@ -229,12 +229,12 @@ class Player:
 class Dork(Player):
     def __init__(self, index, board: Board):
         super().__init__(index, board, "Dork")
-        self.statistics = StatisticsHeuristic()
+        self.statistics = StatisticsHeuristic(board.statistics_logger)
 
     def computer_1st_settlement(self):
         legal_crossroads = self.board.get_legal_crossroads_start()
         actions = []
-        heuristic = self.statistics.settlement_value
+        heuristic = self.statistics.get_statistic
         for cr in legal_crossroads:
             actions += [BuildFirstSettlement(self.hand, heuristic, cr)]
         best_action = take_best_action(actions)
@@ -248,7 +248,7 @@ class Dork(Player):
     def computer_2nd_settlement(self):
         legal_crossroads = self.board.get_legal_crossroads_start()
         actions = []
-        heuristic = self.statistics.settlement_value
+        heuristic = self.statistics.get_statistic
         for cr in legal_crossroads:
             actions += [BuildSecondSettlement(self.hand, heuristic, cr)]
         best_action = take_best_action(actions)

@@ -3,6 +3,7 @@ from Resources import Resource
 from DevStack import DevStack
 import random
 import Dice
+from Log import StatisticsLogger
 from Auxilary import r2s
 from Auxilary import s2r
 from Auxilary import cr_line_len
@@ -56,6 +57,16 @@ class Terrain:
             'number': self.num
         }
         return log
+
+    def bandit_value(self, index):
+        negative_value = 0  # how much index player earn on the terrain
+        positive_value = 0  # how much the rest of the players earn on the terrain
+        for cr in self.crossroads:
+            if cr.ownership == index:
+                negative_value += cr.building * (6 - abs(7 - self.num))
+            elif cr.ownership is not None:
+                positive_value += cr.building * (6 - abs(7 - self.num))
+        return negative_value, positive_value
 
 
 class Crossroad:
@@ -284,6 +295,7 @@ class Neighbor:
 
 class Board:
     def __init__(self, players, log):
+        self.statistics_logger = StatisticsLogger()
         self.log = log
         self.players = players
         self.devStack = DevStack()
