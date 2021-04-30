@@ -51,32 +51,6 @@ class StatisticsHeuristic:
         ratio = self.st_logger.get_statistic(keys)
         return ratio
 
-    def settlement_value(self, build_settlement):
-        book = self.statistics['settlement']['production']
-        time = len(build_settlement.hand.settlements_log)
-        production = build_settlement.crossroad.val['sum']
-        key = str((time, production))
-        if key in book:
-            st = book[key]
-        else:
-            return uniform(0, 1)
-        settlement_log = self.statistics['settlement']
-        events = settlement_log['total events']
-        wins = settlement_log['total wins']
-        loses = events - wins
-        statistic = Statistic(st['event'], st['win'], wins, loses)
-        for resource in Resource:
-            if resource is not Resource.DESSERT:
-                book = self.statistics['settlement'][r2s(resource)]
-                production = build_settlement.crossroad.val[resource]
-                key = str((time, production))
-                if key in book:
-                    st = book[key]
-                else:
-                    return uniform(0, 1)
-                statistic.merge(Statistic(st['event'], st['win'], wins, loses))
-        return statistic.win_ratio
-
 
 class Statistic:
     def __init__(self, event, win, total_win, total_lose):

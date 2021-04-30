@@ -54,7 +54,7 @@ class Action(ABC):
         self.statistics_logger.save_action(statistic_keys, self.hand.index)
 
     def create_keys(self):
-        return [self.name, self.points, self.hand.name]
+        return [self.name, 'points : ' + str(self.points), 'player : ' + str(self.hand.name)]
 
 
 class DoNothing(Action):
@@ -147,7 +147,7 @@ class UseKnight(UseDevCard):
         keys = super(UseKnight, self).create_keys()
         n_i, p_i = self.hand.board.bandit_location.bandit_value(self.hand.index)
         n_f, p_f = self.terrain.bandit_value(self.hand.index)
-        keys += [n_i - n_f, p_f - p_i]
+        keys += ['unlock my production : ' + str(n_i - n_f), 'lock there production : ' + str(p_f - p_i)]
         return keys
 
 
@@ -187,7 +187,7 @@ class UseMonopole(UseDevCard):
         for hand in self.hand.board.hands:
             if hand != self.hand:
                 take += hand.resources[self.resource]
-        keys += [take]
+        keys += ['cards i get : ' + str(take)]
         return keys
 
 
@@ -362,10 +362,10 @@ class BuildSettlement(Action):
 
     def create_keys(self):
         keys = super().create_keys()
-        keys += [self.crossroad.val['sum']]
+        keys += ['all production : ' + str(self.crossroad.val['sum'])]
         for resource in Resource:
             if resource != Resource.DESSERT:
-                keys += [self.crossroad.val[resource]]
+                keys += [r2s(resource) + ' : ' + str(self.crossroad.val[resource])]
         return keys
 
 
@@ -461,10 +461,10 @@ class BuildCity(Action):
 
     def create_keys(self):
         keys = super().create_keys()
-        keys += [self.crossroad.val['sum']]
+        keys += ['all production : ' + str(self.crossroad.val['sum'])]
         for resource in Resource:
             if resource != Resource.DESSERT:
-                keys += [self.crossroad.val[resource]]
+                keys += [r2s(resource) + ' : ' + str(self.crossroad.val[resource])]
         return keys
 
 
@@ -626,7 +626,7 @@ class Trade(Action):
 
     def create_keys(self):
         keys = super().create_keys()
-        keys += [self.exchange_rate]
+        keys += ['exchange rate : ' + str(self.exchange_rate)]
         return keys
 
 

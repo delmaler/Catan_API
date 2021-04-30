@@ -35,9 +35,27 @@ class Log:
     def end_game(self):
         with open(self.game_log_name, 'w') as outfile:
             json.dump(self.game_log, outfile)
+        self.track_development(1)
+        self.track_development(10)
+        self.track_development(100)
+
+    def track_development(self, res):
+        stop = res
+        res = str(res)
         with open('tracking_development.json') as json_file:
             tracker = json.load(json_file)
-            tracker['games'] += [self.round]
+            if res not in tracker['resolution']:
+                tracker['resolution'][res] = {'counter': 0, 'sum': 0, 'games': []}
+            counter = tracker['resolution'][res]['counter']
+            sum = tracker['resolution'][res]['sum']
+            counter += 1
+            sum += self.round
+            if counter >= stop:
+                tracker['resolution'][res]['games'] += [sum / counter]
+                counter = 0
+                sum = 0
+            tracker['resolution'][res]['counter'] = counter
+            tracker['resolution'][res]['sum'] = sum
         with open('tracking_development.json', 'w') as outfile:
             json.dump(tracker, outfile)
 
