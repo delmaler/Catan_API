@@ -69,6 +69,7 @@ class StatisticsLogger:
             win = 1 if winner == action[0] else 0
             pointer = self.statistics['actions']
             for key in action[1]:
+                key = str(key)
                 if key in pointer:
                     pointer[key]['events'] += 1
                     pointer[key]['wins'] += win

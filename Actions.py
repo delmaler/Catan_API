@@ -307,7 +307,6 @@ class BuildSettlement(Action):
         api.print_action(self.name)
         api.print_settlement(self.hand.index, i, j)
         api.point_on_crossroad(i, j)
-        # ToDo : give a more meaningful type
         self.shared_aftermath()
 
     def log_action(self):
