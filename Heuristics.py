@@ -47,26 +47,12 @@ class StatisticsHeuristic:
         self.st_logger = statistic_logger
 
     def get_statistic(self, action: Action):
-        keys = action.create_keys()
-        ratio = self.st_logger.get_statistic(keys)
+        essentials, regulars = action.create_keys()
+        ratios = self.st_logger.get_statistic(essentials, regulars) # type: list[float]
+        ratio = ratios.pop()
+        while ratios:
+
         return ratio
-
-
-class Statistic:
-    def __init__(self, event, win, total_win, total_lose):
-        self.total_win = total_win
-        self.total_lose = total_lose
-        self.event = event
-        self.win = win
-        self.lose = event - win
-        self.win_ratio = self.win / self.total_win
-
-    # Todo: check correctness with professor
-    def merge(self, statistic):
-        self.win = self.win * statistic.win / self.total_win
-        self.lose = self.lose * statistic.lose / self.total_lose
-        self.event = self.win + self.lose
-        self.win_ratio = self.win / self.event
 
 
 def best_action(actions: List[Action]):

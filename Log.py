@@ -97,18 +97,54 @@ class StatisticsLogger:
         with open('statistics.json', 'w') as out_file:
             json.dump(self.statistics, out_file)
 
-    def get_statistic(self, keys):
+    def get_statistic(self, essentials, regulars):
         pointer = self.statistics['actions']
         no_info = True
-        for key in keys:
+        for key in essentials:
             if key in pointer:
                 pointer = pointer[key]
                 no_info = False
             else:
                 if no_info:
-                    return uniform(0, 1)
+                    return uniform(0, 0.66)
                 else:
                     break
-        events = pointer['events']
-        wins = pointer['wins']
+        statistics = []
+        for key in regulars:
+            total_events = pointer['events']
+            total_wins = pointer['wins']
+            events = pointer[key]['events']
+            wins = pointer[key]['wins']
+            statistics += [Statistic(events, wins, total_wins, total_events - total_wins)]
+        st = statistics_merge(statistics)   # type: Statistic
+        events = st.event
+        wins = st.win
         return wins / events
+
+
+def statistics_merge(statistics):
+    if not statistics:
+        return uniform(0, 0.66)
+    else:
+        st = statistics.pop()   # type: Statistic
+        while statistics:
+            st.merge(statistics.pop())
+    return st
+
+
+class Statistic:
+    def __init__(self, event, win, total_win, total_lose):
+        self.total_win = total_win
+        self.total_lose = total_lose
+        self.event = event
+        self.win = win
+        self.lose = event - win
+        self.win_ratio = self.win / self.total_win
+
+    # Todo: check correctness with professor
+    def merge(self, statistic):
+        self.win = self.win * statistic.win / self.total_win
+        self.lose = self.lose * statistic.lose / self.total_lose
+        self.event = self.win + self.lose
+        self.win_ratio = self.win / self.event
+
