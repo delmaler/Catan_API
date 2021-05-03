@@ -226,21 +226,25 @@ class Player:
         return self.simple_choice()
 
 
+def create_general_heuristic(heuristic):
+    return {"do nothing": heuristic,
+            "use knight": heuristic,
+            "use monopole": heuristic,
+            "road builder": heuristic,
+            "use build roads": heuristic,
+            "use year of plenty": heuristic,
+            "build road": heuristic,
+            "build settlement": heuristic,
+            "build city": heuristic,
+            "buy dev card": heuristic,
+            "trade": heuristic}
+
+
 class Dork(Player):
     def __init__(self, index, board: Board):
         super().__init__(index, board, "Dork")
         self.statistics = StatisticsHeuristic(board.statistics_logger)
-        self.heuristic = {"do nothing": self.statistics.get_statistic,
-                          "use knight": self.statistics.get_statistic,
-                          "use monopole": self.statistics.get_statistic,
-                          "road builder": self.statistics.get_statistic,
-                          "use build roads": self.statistics.get_statistic,
-                          "use year of plenty": self.statistics.get_statistic,
-                          "build road": self.statistics.get_statistic,
-                          "build settlement": self.statistics.get_statistic,
-                          "build city": self.statistics.get_statistic,
-                          "buy dev card": self.statistics.get_statistic,
-                          "trade": self.statistics.get_statistic,}
+        self.heuristic = create_general_heuristic(self.statistics.actions_to_point)
 
     def computer_1st_settlement(self):
         legal_crossroads = self.board.get_legal_crossroads_start()
@@ -270,13 +274,15 @@ class Dork(Player):
         take_best_action(actions)
 
     def simple_choice(self):
-        actions = self.get_legal_moves(None)
+        actions = self.get_legal_moves(self.heuristic)
         best_action = None
         for a in actions:
             if best_action is None:
                 best_action = a
             elif a.heuristic > best_action.heuristic:
                 best_action = a
+        if best_action is not None:
+            best_action.do_action()
         """
         for a in actions:
             if isinstance(a, BuildSettlement):

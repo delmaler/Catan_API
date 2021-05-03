@@ -59,7 +59,7 @@ class Game:
                         max_points = hand.points
                 for hand in self.board.hands:
                     if hand.points == max_points:
-                        self.board.statistics_logger.analyze_actions(hand.index)
+                        self.board.statistics_logger.end_game(hand.index)
                 return
             print(self.round)
             for hand in self.board.hands:
@@ -71,7 +71,7 @@ class Game:
             if hand.points >= 10:
                 print("player number " + str(hand.index) + " is the winner")
                 self.log.end_game()
-                self.board.statistics_logger.analyze_actions(hand.index)
+                self.board.statistics_logger.end_game(hand.index)
                 return
 
     def play_round(self):
@@ -191,7 +191,7 @@ def play_game(num):
 
 
 def main():
-    play_game(100)
+    play_game(1)
     # load_game("saved_games/game182.json")
 
 

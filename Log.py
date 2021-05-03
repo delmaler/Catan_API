@@ -86,27 +86,32 @@ class StatisticsLogger:
         self.actions += [(index, e_keys, r_keys)]
         self.actions_to_point[index] += [(e_keys, r_keys)]
 
-    def analyze_actions_to_point(self, index):
+    def got_point(self, index):
         for i, action in enumerate(self.actions_to_point[index][::-1]):
             e_keys, r_keys = action
             pointer = self.statistics['actions']
             for key in e_keys:
                 key = str(key)
+                if key not in pointer:
+                    pointer[key] = {'events': 0, 'wins': 0}
                 if 'actions to point' not in pointer[key]:
                     pointer[key]['actions to point'] = {}
-                if str(i) not in pointer[key]['actions to point']:
-                    pointer[key]['actions to point'][str(i)] = 0
-                pointer[key]['actions to point'][str(i)] += 1
+                if str(i + 1) not in pointer[key]['actions to point']:
+                    pointer[key]['actions to point'][str(i + 1)] = 0
+                pointer[key]['actions to point'][str(i + 1)] += 1
                 pointer = pointer[key]
             for key in r_keys:
                 key = str(key)
+                if key not in pointer:
+                    pointer[key] = {'events': 0, 'wins': 0}
                 if 'actions to point' not in pointer[key]:
                     pointer[key]['actions to point'] = {}
-                if str(i) not in pointer[key]['actions to point']:
-                    pointer[key]['actions to point'][str(i)] = 0
-                pointer[key]['actions to point'][str(i)] += 1
+                if str(i + 1) not in pointer[key]['actions to point']:
+                    pointer[key]['actions to point'][str(i + 1)] = 0
+                pointer[key]['actions to point'][str(i + 1)] += 1
+        self.actions_to_point[index] = []
 
-    def analyze_actions(self, winner):
+    def end_game(self, winner):
         for action in self.actions:
             index, e_keys, r_keys = action
             win = 1 if winner == index else 0

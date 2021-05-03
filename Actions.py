@@ -53,7 +53,9 @@ class Action(ABC):
         essentials, regulars = self.create_keys()
         self.statistics_logger.save_action(self.hand.index, essentials, regulars)
         if self.hand.points > self.points:
-            self.statistics_logger.analyze_actions_to_point(self.hand.index)
+            self.statistics_logger.got_point(self.hand.index)
+        print(self.name)
+        print(self.heuristic)
 
     def create_keys(self):
         essentials = [self.name, 'points : ' + str(self.points), 'player : ' + str(self.hand.name)]
@@ -91,9 +93,9 @@ class UseDevCard(Action):
 
 class UseKnight(UseDevCard):
     def __init__(self, hand, heuristic_method, terrain, dst):
-        super().__init__(hand, heuristic_method)
         self.terrain = terrain
         self.dst = dst
+        super().__init__(hand, heuristic_method)
         self.name = 'use knight'
 
     # self.heuristic += self.compute_heuristic()
@@ -137,7 +139,7 @@ class UseKnight(UseDevCard):
         resources = dst.get_resources_number()
         if resources == 0:
             return None
-        index = randrange(resources)
+        index = randrange(resources) + 1
         for resource in dst.resources.keys():
             if dst.resources[resource] >= index:
                 self.hand.resources[resource] += 1
@@ -157,8 +159,8 @@ class UseKnight(UseDevCard):
 class UseMonopole(UseDevCard):
     def __init__(self, player, heuristic_method, resource):
         assert resource != Resource.DESSERT
-        super().__init__(player, heuristic_method)
         self.resource = resource
+        super().__init__(player, heuristic_method)
         self.name = 'use monopole'
         # self.heuristic += self.compute_heuristic()
 
@@ -401,8 +403,8 @@ class BuildSecondSettlement(BuildSettlement):
 
 class BuildCity(Action):
     def __init__(self, hand, heuristic_method, crossroad: Crossroad):
-        super().__init__(hand, heuristic_method)
         self.crossroad = crossroad
+        super().__init__(hand, heuristic_method)
         # self.heuristic += self.compute_heuristic()
         self.name = 'build city'
 
@@ -591,13 +593,13 @@ class BuildFreeRoad(BuildRoad):
 
 class Trade(Action):
     def __init__(self, hand, heuristic_method, src, exchange_rate, dst, take):
+        self.exchange_rate = exchange_rate
         super().__init__(hand, heuristic_method)
         self.src = src
         self.dst = dst
         self.take = take
         self.give = take * exchange_rate
         self.name = 'trade'
-        self.exchange_rate = exchange_rate
 
     def do_action(self):
         super().do_action()

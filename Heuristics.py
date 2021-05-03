@@ -48,8 +48,13 @@ class StatisticsHeuristic:
 
     def get_statistic(self, action: Action):
         essentials, regulars = action.create_keys()
-        ratio = self.st_logger.get_statistic(essentials, regulars) # type: list[float]
+        ratio = self.st_logger.get_statistic(essentials, regulars) # type: float
         return ratio
+
+    def actions_to_point(self, action: Action):
+        essentials, regulars = action.create_keys()
+        actions = self.st_logger.get_actions_to_point(essentials, regulars)
+        return 1/ actions + self.get_statistic(action)
 
 
 def best_action(actions: List[Action]):
