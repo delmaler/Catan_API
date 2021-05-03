@@ -48,10 +48,7 @@ class StatisticsHeuristic:
 
     def get_statistic(self, action: Action):
         essentials, regulars = action.create_keys()
-        ratios = self.st_logger.get_statistic(essentials, regulars) # type: list[float]
-        ratio = ratios.pop()
-        while ratios:
-
+        ratio = self.st_logger.get_statistic(essentials, regulars) # type: list[float]
         return ratio
 
 

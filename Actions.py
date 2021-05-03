@@ -50,8 +50,10 @@ class Action(ABC):
         api.save_file()
         api.delete_action()
         self.log_action()
-        statistic_keys = self.create_keys()
-        self.statistics_logger.save_action(statistic_keys, self.hand.index)
+        essentials, regulars = self.create_keys()
+        self.statistics_logger.save_action(self.hand.index, essentials, regulars)
+        if self.hand.points > self.points:
+            self.statistics_logger.analyze_actions_to_point(self.hand.index)
 
     def create_keys(self):
         essentials = [self.name, 'points : ' + str(self.points), 'player : ' + str(self.hand.name)]

@@ -191,7 +191,7 @@ def play_game(num):
 
 
 def main():
-    play_game(1000)
+    play_game(100)
     # load_game("saved_games/game182.json")
 
 

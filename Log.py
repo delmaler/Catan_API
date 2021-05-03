@@ -78,15 +78,40 @@ class StatisticsLogger:
         self.actions = []
         with open("statistics.json") as json_file:
             self.statistics = json.load(json_file)
+        self.actions_to_point = {}
 
-    def save_action(self, keys, index):
-        self.actions += [(index, keys)]
+    def save_action(self, index, e_keys, r_keys):
+        if index not in self.actions_to_point:
+            self.actions_to_point[index] = []
+        self.actions += [(index, e_keys, r_keys)]
+        self.actions_to_point[index] += [(e_keys, r_keys)]
+
+    def analyze_actions_to_point(self, index):
+        for i, action in enumerate(self.actions_to_point[index][::-1]):
+            e_keys, r_keys = action
+            pointer = self.statistics['actions']
+            for key in e_keys:
+                key = str(key)
+                if 'actions to point' not in pointer[key]:
+                    pointer[key]['actions to point'] = {}
+                if str(i) not in pointer[key]['actions to point']:
+                    pointer[key]['actions to point'][str(i)] = 0
+                pointer[key]['actions to point'][str(i)] += 1
+                pointer = pointer[key]
+            for key in r_keys:
+                key = str(key)
+                if 'actions to point' not in pointer[key]:
+                    pointer[key]['actions to point'] = {}
+                if str(i) not in pointer[key]['actions to point']:
+                    pointer[key]['actions to point'][str(i)] = 0
+                pointer[key]['actions to point'][str(i)] += 1
 
     def analyze_actions(self, winner):
         for action in self.actions:
-            win = 1 if winner == action[0] else 0
+            index, e_keys, r_keys = action
+            win = 1 if winner == index else 0
             pointer = self.statistics['actions']
-            for key in action[1]:
+            for key in e_keys:
                 key = str(key)
                 if key in pointer:
                     pointer[key]['events'] += 1
@@ -94,21 +119,22 @@ class StatisticsLogger:
                 else:
                     pointer[key] = {'events': 1, 'wins': win}
                 pointer = pointer[key]
+            for key in r_keys:
+                if key in pointer:
+                    pointer[key]['events'] += 1
+                    pointer[key]['wins'] += win
+                else:
+                    pointer[key] = {'events': 1, 'wins': win}
         with open('statistics.json', 'w') as out_file:
             json.dump(self.statistics, out_file)
 
     def get_statistic(self, essentials, regulars):
         pointer = self.statistics['actions']
-        no_info = True
         for key in essentials:
             if key in pointer:
                 pointer = pointer[key]
-                no_info = False
             else:
-                if no_info:
-                    return uniform(0, 0.66)
-                else:
-                    break
+                return uniform(0, 0.66)
         statistics = []
         for key in regulars:
             total_events = pointer['events']
@@ -120,6 +146,24 @@ class StatisticsLogger:
         events = st.event
         wins = st.win
         return wins / events
+
+    def get_actions_to_point(self, essentials, regulars):
+        pointer = self.statistics['actions']
+        for key in essentials:
+            if key in pointer:
+                pointer = pointer[key]
+            else:
+                return 4
+        sum_actions = 0
+        sum_actions_to_point = 0
+        for k, v in pointer['actions to point'].items:
+            sum_actions += v
+            sum_actions_to_point += k * v
+        for key in regulars:
+            for k, v in pointer[key]['actions to point'].items:
+                sum_actions += v
+                sum_actions_to_point += k * v
+        return sum_actions_to_point / sum_actions
 
 
 def statistics_merge(statistics):

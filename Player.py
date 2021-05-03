@@ -230,6 +230,17 @@ class Dork(Player):
     def __init__(self, index, board: Board):
         super().__init__(index, board, "Dork")
         self.statistics = StatisticsHeuristic(board.statistics_logger)
+        self.heuristic = {"do nothing": self.statistics.get_statistic,
+                          "use knight": self.statistics.get_statistic,
+                          "use monopole": self.statistics.get_statistic,
+                          "road builder": self.statistics.get_statistic,
+                          "use build roads": self.statistics.get_statistic,
+                          "use year of plenty": self.statistics.get_statistic,
+                          "build road": self.statistics.get_statistic,
+                          "build settlement": self.statistics.get_statistic,
+                          "build city": self.statistics.get_statistic,
+                          "buy dev card": self.statistics.get_statistic,
+                          "trade": self.statistics.get_statistic,}
 
     def computer_1st_settlement(self):
         legal_crossroads = self.board.get_legal_crossroads_start()
@@ -262,6 +273,12 @@ class Dork(Player):
         actions = self.get_legal_moves(None)
         best_action = None
         for a in actions:
+            if best_action is None:
+                best_action = a
+            elif a.heuristic > best_action.heuristic:
+                best_action = a
+        """
+        for a in actions:
             if isinstance(a, BuildSettlement):
                 if best_action is None:
                     best_action = a
@@ -285,6 +302,7 @@ class Dork(Player):
                     a.do_action()
                     return True
         return False
+        """
 
     def compute_turn(self):
         self.simple_choice()
