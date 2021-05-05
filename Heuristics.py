@@ -7,6 +7,7 @@ from Auxilary import r2s
 import json
 from typing import List
 from random import uniform
+from Hand import Hand
 
 
 class SimpleHeuristic:
@@ -73,3 +74,28 @@ def greatest_crossroad(crossroads):
             max_cr["sum"] = cr.val["sum"]
             max_cr["cr"] = cr
     return max_cr["cr"]
+
+
+def hand_stat(hand: Hand):
+    stat = hand.points
+    stat += hand.resources['sum'] * 0.12
+    for v in hand.cards.values():
+        stat += len(v) * 0.4
+    if hand.index != hand.board.longest_road_owner:
+        road_value = 2 - 0.3 * (hand.board.longest_road_size + 1 - hand.longest_road)
+        if road_value > 0:
+            stat += road_value
+    if hand.index != hand.board.largest_army_owner:
+        army_value = 2 - 0.5 * (hand.board.largest_army_size - hand.largest_army)
+        if army_value > 0:
+            stat += army_value
+    return stat
+
+
+def hand_heuristic(hands: list[Hand], index):
+    hand_s = hand_stat(hands[index])
+    hands_sum = 0
+    for h in hands:
+        hands_sum += hand_stat(h)
+    return hand_s / hands_sum
+

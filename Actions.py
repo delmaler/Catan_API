@@ -38,6 +38,9 @@ class Action(ABC):
         history_log = {'name': self.name, 'player': self.hand.index}
         self.log.action(history_log)
 
+    def log_hand(self):
+
+
     def tmp_do(self):
         pass
 
