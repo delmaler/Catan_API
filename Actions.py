@@ -38,9 +38,6 @@ class Action(ABC):
         history_log = {'name': self.name, 'player': self.hand.index}
         self.log.action(history_log)
 
-    def log_hand(self):
-
-
     def tmp_do(self):
         pass
 
@@ -113,7 +110,7 @@ class UseKnight(UseDevCard):
     def compute_heuristic(self):
         resource = self.use_knight()
         new_heuristic = self.hand.heuristic
-        self.undo_use_knight(resource, self.terrain)
+        self.undo(resource, self.terrain)
         return new_heuristic
 
     # terrain = where to put the bandit
@@ -129,7 +126,7 @@ class UseKnight(UseDevCard):
         return None
 
     # todo test it
-    def undo_use_knight(self, resource: Resource, terrain: Terrain):
+    def undo(self, resource: Resource, terrain: Terrain):
         dst = self.hand.board.hands[self.dst]
         assert terrain is not None
         terrain.put_bandit()
