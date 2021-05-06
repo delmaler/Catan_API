@@ -3,6 +3,7 @@ from Resources import ROAD_PRICE
 from Resources import SETTLEMENT_PRICE
 from Resources import CITY_PRICE
 from Resources import DEV_PRICE
+from DevStack import DevCard
 from Auxilary import r2s
 import math
 
@@ -24,7 +25,8 @@ class Hand:
         self.points = 0
         # ---- hand ---- #
         self.resources = {Resource.WOOD: 0, Resource.IRON: 0, Resource.WHEAT: 0, Resource.SHEEP: 0, Resource.CLAY: 0}
-        self.cards = {"knight": [], "victory points": [], "monopole": [], "road builder": [], "year of prosper": []}
+        self.cards = {"knight": [], "victory points": [], "monopole": [], "road builder": [],
+                      "year of prosper": []}  # type: dict[str: list[DevCard]]
         self.road_pieces = 15
         self.settlement_pieces = 5
         self.city_pieces = 4
@@ -89,6 +91,21 @@ class Hand:
 
     # ---- auxiliary functions ---- #
 
+    def add_resources(self, resource: Resource, amount):
+        if resource is not None:
+            self.resources[resource] += amount
+
+    def subtract_resources(self, resource: Resource, amount):
+        if resource is not None:
+            self.resources[resource] -= amount
+
+    def add_card(self, card: DevCard):
+        name = card.get_name()
+        self.cards[name] += [card]
+
+    def subtract_point(self):
+        self.points -= 1
+
     def set_distances(self):
         stack = []
         stack_fert = []
@@ -130,8 +147,3 @@ class Hand:
     def receive(self, price):
         for resource in price:
             self.resources[resource] += price[resource]
-
-    # ---- test functions ---- #
-
-    def update_resource_values(self):
-        pass

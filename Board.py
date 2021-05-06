@@ -92,16 +92,19 @@ class Crossroad:
         self.port = None
 
     def build(self, player):
+        legals = []
         if self.ownership is None:
             self.ownership = player
             for n in self.neighbors:
+                legals += [n.crossroad.legal]
                 n.crossroad.legal = False
         if self.ownership == player and self.building < 2:
             self.building += 1
             self.fertility_dist = INFINITY
-            # Todo: delete comment
-            # print_crossroad(self)
+        return legals
 
+    # build do the same as temp build
+    # ToDo: delete
     def tmp_build(self, player):
         legals = []
         if self.ownership is None:
