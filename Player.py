@@ -2,6 +2,7 @@ from Heuristics import SimpleHeuristic
 from Heuristics import StatisticsHeuristic
 from Heuristics import best_action
 from Heuristics import greatest_crossroad
+from Heuristics import hand_heuristic
 from Actions import Trade
 from Actions import BuildFreeRoad
 from Actions import BuildRoad
@@ -77,8 +78,6 @@ def take_best_action(actions):
             if a.heuristic > baction.heuristic:
                 baction = a
         info = baction.do_action()
-        baction.undo(info)
-        baction.do_action()
         return baction
     else:
         return None
@@ -247,44 +246,45 @@ class Dork(Player):
     def __init__(self, index, board: Board):
         super().__init__(index, board, "Dork")
         self.statistics = StatisticsHeuristic(board.statistics_logger)
-        self.heuristic = create_general_heuristic(self.statistics.actions_to_point)
+        self.heuristic = create_general_heuristic(hand_heuristic)
 
     def computer_1st_settlement(self):
         legal_crossroads = self.board.get_legal_crossroads_start()
         actions = []
-        heuristic = self.statistics.get_statistic
+        heuristic = hand_heuristic
         for cr in legal_crossroads:
             actions += [BuildFirstSettlement(self.hand, heuristic, cr)]
-        best_action = take_best_action(actions)
+        baction = take_best_action(actions) # type: BuildFirstSettlement
         actions = []
-        cr = best_action.crossroad
+        cr = baction.crossroad
         # add heuristic for road
         for n in cr.neighbors:
-            actions += [BuildFreeRoad(self.hand, None, n.road)]
+            actions += [BuildFreeRoad(self.hand, heuristic, n.road)]
         take_best_action(actions)
 
     def computer_2nd_settlement(self):
         legal_crossroads = self.board.get_legal_crossroads_start()
         actions = []
-        heuristic = self.statistics.get_statistic
+        heuristic = hand_heuristic
         for cr in legal_crossroads:
             actions += [BuildSecondSettlement(self.hand, heuristic, cr)]
-        best_action = take_best_action(actions)
+        best_action = take_best_action(actions) # type: BuildSecondSettlement
         actions = []
         cr = best_action.crossroad
         for n in cr.neighbors:
-            actions += [BuildFreeRoad(self.hand, None, n.road)]
+            actions += [BuildFreeRoad(self.hand, heuristic, n.road)]
         take_best_action(actions)
 
     def simple_choice(self):
         actions = self.get_legal_moves(self.heuristic)
-        best_action = None
+        best_action = None  # type: Action
         for a in actions:
             if best_action is None:
                 best_action = a
             elif a.heuristic > best_action.heuristic:
                 best_action = a
         if best_action is not None:
+            print(best_action.name)
             best_action.do_action()
         """
         for a in actions:

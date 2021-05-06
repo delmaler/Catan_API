@@ -61,7 +61,9 @@ class Game:
                     if hand.points == max_points:
                         self.board.statistics_logger.end_game(hand.index)
                 return
+            print("\n\n\n")
             print(self.round)
+            print("\n\n\n")
             for hand in self.board.hands:
                 for typeCard in hand.cards.values():
                     if typeCard:

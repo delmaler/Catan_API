@@ -78,7 +78,9 @@ def greatest_crossroad(crossroads):
 
 def hand_stat(hand: Hand):
     stat = hand.points
-    stat += hand.resources['sum'] * 0.12
+    for resource in Resource:
+        if resource != Resource.DESSERT:
+            stat += hand.resources[resource] * 0.12
     for v in hand.cards.values():
         stat += len(v) * 0.4
     if hand.index != hand.board.longest_road_owner:
@@ -92,10 +94,10 @@ def hand_stat(hand: Hand):
     return stat
 
 
-def hand_heuristic(hands: list[Hand], index):
-    hand_s = hand_stat(hands[index])
-    hands_sum = 0
-    for h in hands:
-        hands_sum += hand_stat(h)
-    return hand_s / hands_sum
-
+def hand_heuristic(action: Action):
+    action.evaluation_on()
+    undo_info = action.do_action()
+    value = hand_stat(action.hand)
+    action.undo(undo_info)
+    action.evaluation_off()
+    return value

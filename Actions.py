@@ -27,6 +27,7 @@ api: API
 
 class Action(ABC):
     def __init__(self, hand: Hand, heuristic_method):
+        self.evaluation_state = False
         self.hand = hand
         self.board = hand.board  # type: Board
         self.hands = self.board.hands  # type: list[Hand]
@@ -39,9 +40,18 @@ class Action(ABC):
         self.log = self.hand.board.log  # type: Log
         self.statistics_logger = self.hand.board.statistics_logger  # type: StatisticsLogger
 
+    def evaluation_on(self):
+        self.evaluation_state = True
+
+    def evaluation_off(self):
+        self.evaluation_state = False
+
     # do action return necessary information for undo
     def do_action(self):
-        self.hand.heuristic = self.heuristic
+        if not self.evaluation_state:
+            print(self.name)
+        # self.hand.heuristic = self.heuristic
+        return None
 
     def log_action(self):
         # ToDo: build statistic based on the name of the player (on Dork, Guru, or NNPlayer)
@@ -59,13 +69,14 @@ class Action(ABC):
         api.print_resources(self.hand.index, self.hand.resources)
         api.save_file()
         api.delete_action()
-        self.log_action()
-        essentials, regulars = self.create_keys()
-        self.statistics_logger.save_action(self.hand.index, essentials, regulars)
-        if self.hand.points > self.points:
-            self.statistics_logger.got_point(self.hand.index)
-        print(self.name)
-        print(self.heuristic)
+        if not self.evaluation_state:
+            self.log_action()
+            essentials, regulars = self.create_keys()
+            self.statistics_logger.save_action(self.hand.index, essentials, regulars)
+            if self.hand.points > self.points:
+                self.statistics_logger.got_point(self.hand.index)
+            print(self.name)
+            print(self.heuristic)
 
     def create_keys(self):
         essentials = [self.name, 'points : ' + str(self.points), 'player : ' + str(self.hand.name)]
@@ -255,9 +266,9 @@ class UseYearOfPlenty(UseDevCard):
 
 class UseBuildRoads(UseDevCard):
     def __init__(self, hand, heuristic_method, road1: Road, road2: Road):
-        super().__init__(hand, heuristic_method)
         self.road1 = road1
         self.road2 = road2
+        super().__init__(hand, heuristic_method)
         self.name = 'use build roads'
         # self.heuristic += self.compute_heuristic()
 
@@ -535,8 +546,8 @@ class BuildCity(Action):
 
 class BuildRoad(Action):
     def __init__(self, hand, heuristic_method, road: Road):
-        super().__init__(hand, heuristic_method)
         self.road = road
+        super().__init__(hand, heuristic_method)
         self.name = 'build road'
 
     def do_action(self):
@@ -650,11 +661,11 @@ class BuildFreeRoad(BuildRoad):
 class Trade(Action):
     def __init__(self, hand, heuristic_method, src, exchange_rate, dst, take):
         self.exchange_rate = exchange_rate
-        super().__init__(hand, heuristic_method)
         self.src = src
         self.dst = dst
         self.take = take
         self.give = take * exchange_rate
+        super().__init__(hand, heuristic_method)
         self.name = 'trade'
 
     def do_action(self):
