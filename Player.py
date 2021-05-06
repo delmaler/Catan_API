@@ -17,6 +17,7 @@ from Actions import UseBuildRoads
 from Actions import UseYearOfPlenty
 from Actions import BuyDevCard
 from Actions import ThrowCards
+from Actions import Action
 from Board import Board
 from Hand import Hand
 from Resources import Resource
@@ -71,12 +72,14 @@ class LogToAction:
 
 def take_best_action(actions):
     if actions:
-        best_action = actions.pop()
+        baction = actions.pop() # type: Action
         for a in actions:
-            if a.heuristic > best_action.heuristic:
-                best_action = a
-        best_action.do_action()
-        return best_action
+            if a.heuristic > baction.heuristic:
+                baction = a
+        info = baction.do_action()
+        baction.undo(info)
+        baction.do_action()
+        return baction
     else:
         return None
 

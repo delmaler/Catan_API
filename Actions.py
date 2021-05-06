@@ -263,15 +263,15 @@ class UseBuildRoads(UseDevCard):
 
     def do_action(self):
         super().do_action()
-        self.build_2_roads()
+        info = self.build_2_roads()
         # ToDo : give a more meaningful type
         self.shared_aftermath()
-        return self.road1, self.road2
+        return info
 
     def undo(self, info):
-        r1, r2 = info  # type: Road, Road
-        r1.undo_build()
-        r2.undo_build()
+        r1, r1i, r2, r2i = info  # type: Road, tuple, Road, tuple
+        r1.undo_build(r1i)
+        r2.undo_build(r2i)
         card = RoadBuilding()
         card.ok_to_use = True
         self.hand.add_card(card)
@@ -296,17 +296,14 @@ class UseBuildRoads(UseDevCard):
         hand = self.hand  # type: Hand
         road1 = self.road1  # type: Road
         road2 = self.road2  # type: Road
-        player = hand.index
-        for index, card in enumerate(hand.cards["road builder"]):
-            if card.is_valid():
+        cards = hand.cards["road builder"]
+        for index, card in enumerate(cards):
+            if card.ok_to_use:
                 self.hand.cards["road builder"].pop(index)
-                if road1.is_legal(player) and road2.is_legal(player):
-                    # self.heuristic += self.compute_heuristic()
-                    road1.build(hand.index)
-                    road2.build(hand.index)
-                    hand.cards["road building"].remove(card)
-                    return True
-        return False
+                # self.heuristic += self.compute_heuristic()
+                info1 = road1.build(hand.index)
+                info2 = road2.build(hand.index)
+                return [road1, info1, road2, info2]
 
 
 class UseVictoryPoint(UseDevCard):
@@ -436,13 +433,9 @@ class BuildFirstSettlement(BuildSettlement):
 
     def do_action(self):
         build_info = self.create_settlement()
+        self.hand.settlements_log += [self.crossroad]
         self.action_aftermath()
         return build_info
-
-    def undo(self, info):
-        build_info = info
-        self.crossroad.unbuild(self.index, build_info)
-        self.hand.settlements_log.pop()
 
     def is_legal(self):
         return True
@@ -455,18 +448,9 @@ class BuildSecondSettlement(BuildSettlement):
 
     def do_action(self):
         build_info = self.create_settlement()
+        self.hand.settlements_log += [self.crossroad]
         self.action_aftermath()
         return build_info
-
-
-def undo(self, info):
-    build_info = info
-    self.crossroad.unbuild(self.index, build_info)
-    self.hand.settlements_log.pop()
-
-
-def is_legal(self):
-    return True
 
 
 class BuildCity(Action):
@@ -557,8 +541,9 @@ class BuildRoad(Action):
 
     def do_action(self):
         super().do_action()
-        self.buy_road()
+        info = self.buy_road()
         self.action_aftermath()
+        return info
 
     def action_aftermath(self):
         api.print_action(self.name)
@@ -586,26 +571,20 @@ class BuildRoad(Action):
     def buy_road(self):
         hand = self.hand
         hand.pay(ROAD_PRICE)
-        self.create_road()
-        return
-
-    # ---- take a temporary action ---- #
-
-    def tmp_do(self):
-        if self.hand.can_buy_road() and self.road.is_legal(self.hand.index):
-            self.hand.pay(ROAD_PRICE)
-            self.road.temp_build(self.hand.index)
+        info = self.create_road()
+        return info
 
     # ---- undo an action ---- #
 
     def undo(self, info):
         self.hand.receive(ROAD_PRICE)
-        self.road.undo_build()
+        self.road.undo_build(info)
 
     def create_road(self):
         self.hand.road_pieces -= 1
-        self.road.build(self.hand.index)
+        info = self.road.build(self.hand.index)
         self.hand.set_distances()
+        return info
 
     def compute_heuristic(self):
         heuristic_increment = 0
@@ -660,8 +639,9 @@ class BuildFreeRoad(BuildRoad):
         self.name = 'build free road'
 
     def do_action(self):
-        self.create_road()
+        info = self.create_road()
         self.action_aftermath()
+        return info
 
     def is_legal(self):
         return True
@@ -682,6 +662,13 @@ class Trade(Action):
         self.trade()
         api.trade(self.hand.board.players, self.hand.index, self.src, self.dst, self.give, self.take)
         self.shared_aftermath()
+        return self.src, self.give, self.dst, self.take
+
+    def undo(self, info):
+        source, give, destination, take = info
+        hand = self.hand
+        hand.add_resources(source, give)
+        hand.subtract_resources(destination, take)
 
     # todo
     def compute_heuristic(self):
@@ -719,7 +706,14 @@ class BuyDevCard(Action):
 
     def do_action(self):
         super().do_action()
-        self.buy_development_card()
+        name = self.buy_development_card()
+        return name
+
+    def undo(self, info):
+        name = info
+        hand = self.hand
+        hand.receive(DEV_PRICE)
+        hand.cards[name].pop()
 
     def compute_heuristic(self):
         return self.hand.parameters.dev_card_value
@@ -730,6 +724,7 @@ class BuyDevCard(Action):
         hand.pay(DEV_PRICE)
         card = stack.get()
         hand.cards[card.name] += [card]
+        return card.name
 
 
 class ThrowCards(Action):
@@ -741,3 +736,8 @@ class ThrowCards(Action):
     def do_action(self):
         for resource in self.cards:
             self.hand.resources[resource] -= self.cards[resource]
+        return None
+
+    def undo(self, info):
+        for resource in self.cards:
+            self.hand.add_resources(resource, 1)
