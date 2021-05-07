@@ -103,19 +103,6 @@ class Crossroad:
             self.fertility_dist = INFINITY
         return legals
 
-    # build do the same as temp build
-    # ToDo: delete
-    def tmp_build(self, player):
-        legals = []
-        if self.ownership is None:
-            self.ownership = player
-            for n in range(len(self.neighbors)):
-                legals += [self.neighbors[n].crossroad.legal]
-                self.neighbors[n].crossroad.legal = False
-        if self.ownership == player and self.building < 2:
-            self.building += 1
-        return legals
-
     def unbuild(self, player, legals):
         assert self.ownership == player
         if self.building == 1:

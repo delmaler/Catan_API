@@ -80,17 +80,24 @@ def hand_stat(hand: Hand):
     stat = hand.points
     for resource in Resource:
         if resource != Resource.DESSERT:
+            val = hand.resources[resource] * 12
+            print(r2s(resource) + ' score : ' + str(val))
             stat += hand.resources[resource] * 0.12
+    val = stat
     for v in hand.cards.values():
         stat += len(v) * 0.4
+    val = stat - val
+    print('development cards score : ' + str(val))
     if hand.index != hand.board.longest_road_owner:
         road_value = 2 - 0.3 * (hand.board.longest_road_size + 1 - hand.longest_road)
         if road_value > 0:
             stat += road_value
+            print('longest road score : ' + str(road_value))
     if hand.index != hand.board.largest_army_owner:
         army_value = 2 - 0.5 * (hand.board.largest_army_size - hand.largest_army)
         if army_value > 0:
             stat += army_value
+            print('largest army score : ' + str(army_value))
     return stat
 
 
@@ -99,5 +106,8 @@ def hand_heuristic(action: Action):
     undo_info = action.do_action()
     value = hand_stat(action.hand)
     action.undo(undo_info)
+    after = hand_stat(action.hand)
+    if after == value:
+        print("this is quite fishy")
     action.evaluation_off()
     return value

@@ -65,11 +65,11 @@ class Action(ABC):
         pass
 
     def shared_aftermath(self):
-        api.print_action(self.name)
-        api.print_resources(self.hand.index, self.hand.resources)
-        api.save_file()
-        api.delete_action()
         if not self.evaluation_state:
+            api.print_action(self.name)
+            api.print_resources(self.hand.index, self.hand.resources)
+            api.save_file()
+            api.delete_action()
             self.log_action()
             essentials, regulars = self.create_keys()
             self.statistics_logger.save_action(self.hand.index, essentials, regulars)
@@ -402,18 +402,6 @@ class BuildSettlement(Action):
         hand.settlements_log += [self.crossroad]
         return undo_info
 
-    def compute_heuristic(self):
-        hand = self.hand
-        old_production_variety = len(list(filter(lambda x: x.value != 0, hand.production)))
-        old_production = hand.production
-        legals = self.crossroad.tmp_build(self.hand.index)
-        heuristic_increment = len(list(filter(lambda x: x.value != 0, hand.production))) - old_production_variety
-        for resource in hand.production:
-            heuristic_increment += (hand.production[resource] - old_production[resource]) * \
-                                   hand.parameters.resource_value[resource]
-        self.crossroad.unbuild(self.hand.index, legals)
-        return heuristic_increment
-
     def create_settlement(self):
         hand = self.hand
         self.crossroad.connected[hand.index] = True
@@ -448,11 +436,16 @@ class BuildFirstSettlement(BuildSettlement):
         self.action_aftermath()
         return build_info
 
+    def undo(self, info):
+        build_info = info
+        self.crossroad.unbuild(self.index, build_info)
+        self.hand.settlements_log.pop()
+
     def is_legal(self):
         return True
 
 
-class BuildSecondSettlement(BuildSettlement):
+class BuildSecondSettlement(BuildFirstSettlement):
     def __init__(self, hand, heuristic_method, crossroad):
         super().__init__(hand, heuristic_method, crossroad)
         self.name = 'build second settlement'
@@ -522,18 +515,6 @@ class BuildCity(Action):
         build_info = self.crossroad.build(hand.index)
         hand.set_distances()
         return build_info
-
-    def compute_heuristic(self):
-        hand = self.hand
-        old_production_variety = len(list(filter(lambda x: x.value != 0, hand.production)))
-        old_production = hand.production
-        legals = self.crossroad.tmp_build(self.hand.index)
-        heuristic_increment = len(list(filter(lambda x: x.value != 0, hand.production))) - old_production_variety
-        for resource in hand.production:
-            heuristic_increment += (hand.production[resource] - old_production[resource]) * \
-                                   hand.parameters.resource_value[resource]
-        self.crossroad.unbuild(self.hand.index, legals)
-        return heuristic_increment
 
     def create_keys(self):
         essentials, regulars = super().create_keys()
